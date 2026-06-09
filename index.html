@@ -3,38 +3,602 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>INFINITE ASCENSION | 50 Weapons + 30 Auras</title>
-    <link rel="stylesheet" href="style.css">
+    <title>Physics League | Learn Mechanics Through Gameplay</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+        }
+        body {
+            background: linear-gradient(145deg, #0a0f1e 0%, #060a14 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Segoe UI', 'Roboto', monospace;
+        }
+        .game-container {
+            position: relative;
+            background: #03060c;
+            border-radius: 40px;
+            padding: 20px;
+            box-shadow: 0 25px 45px rgba(0,0,0,0.6);
+        }
+        canvas {
+            display: block;
+            margin: 0 auto;
+            border-radius: 24px;
+            box-shadow: 0 0 0 3px #2e3b4e, 0 0 0 6px #0f1222;
+            cursor: crosshair;
+            background: #121826;
+        }
+        .ui-panel {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            right: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(10, 15, 30, 0.85);
+            backdrop-filter: blur(12px);
+            border-radius: 60px;
+            padding: 8px 24px;
+            color: #f0f3fa;
+            font-weight: bold;
+            font-family: monospace;
+            font-size: 0.9rem;
+            border: 1px solid #4c6a8e;
+            pointer-events: none;
+            z-index: 10;
+        }
+        .stats {
+            display: flex;
+            gap: 28px;
+        }
+        .controls {
+            pointer-events: auto;
+            display: flex;
+            gap: 20px;
+        }
+        button {
+            background: #1e2a3a;
+            border: none;
+            color: white;
+            font-weight: bold;
+            padding: 6px 14px;
+            border-radius: 40px;
+            cursor: pointer;
+            font-family: monospace;
+            transition: 0.1s;
+            pointer-events: auto;
+        }
+        button:hover {
+            background: #3a5a7a;
+            transform: scale(0.98);
+        }
+        .mode-selector {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            z-index: 20;
+            pointer-events: none;
+        }
+        .mode-btn {
+            pointer-events: auto;
+            background: #0f172ad9;
+            backdrop-filter: blur(8px);
+            padding: 8px 24px;
+            border-radius: 40px;
+            font-weight: bold;
+            font-size: 1rem;
+            border: 1px solid #aac9ff;
+        }
+        .learning-card {
+            position: absolute;
+            bottom: 80px;
+            right: 20px;
+            background: #0b0e1cd9;
+            backdrop-filter: blur(16px);
+            border-radius: 24px;
+            padding: 12px 20px;
+            max-width: 280px;
+            border-left: 5px solid #ffaa44;
+            color: #eef;
+            font-size: 0.8rem;
+            font-family: monospace;
+            pointer-events: none;
+            z-index: 10;
+        }
+        .slider-panel {
+            position: absolute;
+            top: 80px;
+            right: 20px;
+            background: #0b0e1ccc;
+            backdrop-filter: blur(8px);
+            border-radius: 32px;
+            padding: 12px 18px;
+            color: white;
+            font-size: 0.75rem;
+            font-family: monospace;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            pointer-events: auto;
+            border: 1px solid #88aaff;
+            z-index: 15;
+        }
+        .slider-panel label {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+        }
+        input {
+            width: 120px;
+            cursor: pointer;
+        }
+        .scoreboard {
+            position: absolute;
+            top: 80px;
+            left: 20px;
+            background: #000000aa;
+            padding: 8px 16px;
+            border-radius: 32px;
+            font-family: monospace;
+            font-weight: bold;
+            color: #ffdd99;
+            pointer-events: none;
+        }
+        .hidden {
+            display: none;
+        }
+        @media (max-width: 800px) {
+            .stats { gap: 12px; font-size: 0.7rem; }
+            .slider-panel { transform: scale(0.85); right: -10px; top: 70px; }
+        }
+    </style>
 </head>
 <body>
-    <div class="game-container">
-        <canvas id="gameCanvas" width="1300" height="800"></canvas>
-        <div class="hud">
-            <div class="stats">
-                <div>❤️ <span id="hp">100</span>/<span id="maxHp">100</span></div>
-                <div>⚡ DMG x<span id="dmgMult">1.00</span></div>
-                <div>⭐ Lv.<span id="level">1</span></div>
-                <div>📊 XP <span id="xp">0</span>/<span id="xpNext">100</span></div>
-                <div>💀 Kills <span id="kills">0</span></div>
-                <div>🌊 Wave <span id="wave">1</span></div>
-            </div>
-            <div class="arsenal">
-                <div>🔫 Weapons: <span id="weaponCount">1</span>/50</div>
-                <div>✨ Auras: <span id="auraCount">0</span>/30</div>
-            </div>
+<div class="game-container">
+    <canvas id="physicsCanvas" width="1000" height="600"></canvas>
+    <div class="ui-panel">
+        <div class="stats">
+            <span>📐 Angle: <span id="angleVal">45</span>°</span>
+            <span>⚡ Power: <span id="powerVal">50</span> N</span>
+            <span>⚖️ Mass: <span id="massVal">2.0</span> kg</span>
+            <span>💨 Velocity: <span id="velVal">0.00</span> m/s</span>
+            <span>🎯 Score: <span id="scoreVal">0</span></span>
         </div>
-        <div id="upgradePanel" class="upgrade-panel hidden">
-            <h2>🌟 ASCENSION 🌟</h2>
-            <p>Choose your power</p>
-            <div class="upgrade-grid" id="upgradeGrid"></div>
+        <div class="controls">
+            <button id="resetBtn">⟳ Reset</button>
+            <button id="actionBtn">🚀 Launch / Apply Force</button>
         </div>
-        <div id="gameOverPanel" class="game-over hidden">
-            <h2>💀 DEFEATED 💀</h2>
-            <p>Wave <span id="finalWave">0</span> | Kills <span id="finalKills">0</span></p>
-            <button id="restartButton">🔄 RESTART</button>
-        </div>
-        <div class="tip">WASD move | Mouse aim | Auto-attack | XP orbs scale by enemy tier</div>
     </div>
-    <script src="game.js"></script>
+    <div class="mode-selector">
+        <button id="challengeMode" class="mode-btn">🎯 Challenge Mode</button>
+        <button id="vsMode" class="mode-btn">⚔️ VS Mode (2P)</button>
+        <button id="sandboxMode" class="mode-btn">🧪 Sandbox</button>
+    </div>
+    <div class="slider-panel">
+        <label>📐 Launch Angle <input type="range" id="angleSlider" min="0" max="90" value="45" step="1"></label>
+        <label>⚡ Force / Power <input type="range" id="powerSlider" min="0" max="120" value="50" step="1"></label>
+        <label>⚖️ Projectile Mass <input type="range" id="massSlider" min="0.5" max="8" value="2" step="0.1"></label>
+        <label>🐌 Gravity (m/s²) <input type="range" id="gravitySlider" min="0" max="20" value="9.8" step="0.5"></label>
+        <button id="slowMoBtn">🐢 Slow-mo Replay</button>
+    </div>
+    <div class="scoreboard" id="scoreboard">
+        Challenge Score: 0
+    </div>
+    <div class="learning-card" id="learningCard">
+        <strong>📖 Physics in action</strong><br>
+        Adjust angle & power → launch projectile.<br>
+        Gravity pulls down at 9.8 m/s².
+    </div>
+</div>
+
+<script>
+    (function(){
+        // ----- CANVAS -----
+        const canvas = document.getElementById('physicsCanvas');
+        const ctx = canvas.getContext('2d');
+        const W = 1000, H = 600;
+        canvas.width = W; canvas.height = H;
+
+        // ----- GAME STATE -----
+        let currentMode = "challenge"; // challenge, vs, sandbox
+        let gameRunning = true;
+        let animationId = null;
+        
+        // Physics objects
+        let projectile = { x: 100, y: H-80, vx: 0, vy: 0, radius: 12, mass: 2.0, active: true };
+        let target = { x: 800, y: H-80, radius: 18, hit: false };
+        let secondPlayer = { x: W-150, y: H-80, radius: 12, mass: 2.0, vx: 0, vy: 0, active: true }; // VS mode ball
+        
+        // VS mode goal zones
+        let leftGoal = { x: 30, y: H/2-40, w: 20, h: 80 };
+        let rightGoal = { x: W-50, y: H/2-40, w: 20, h: 80 };
+        let vsScore = { left: 0, right: 0 };
+        let vsRoundActive = true;
+        
+        // Physics constants
+        let gravity = 9.8;          // m/s²
+        let groundY = H - 40;
+        let restitution = 0.7;       // bounce
+        let frictionAir = 0.99;
+        
+        // UI elements
+        const angleSlider = document.getElementById('angleSlider');
+        const powerSlider = document.getElementById('powerSlider');
+        const massSlider = document.getElementById('massSlider');
+        const gravitySlider = document.getElementById('gravitySlider');
+        const angleVal = document.getElementById('angleVal');
+        const powerVal = document.getElementById('powerVal');
+        const massVal = document.getElementById('massVal');
+        const velVal = document.getElementById('velVal');
+        const scoreValSpan = document.getElementById('scoreVal');
+        const scoreboardDiv = document.getElementById('scoreboard');
+        const learningCard = document.getElementById('learningCard');
+        const actionBtn = document.getElementById('actionBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const slowMoBtn = document.getElementById('slowMoBtn');
+        
+        // Challenge scoring
+        let challengeScore = 0;
+        let lastShotHit = false;
+        
+        // Trajectory prediction points
+        let predictionPoints = [];
+        
+        // Slow motion replay variables
+        let replayFrames = [];
+        let isReplaying = false;
+        let replayIndex = 0;
+        
+        // ----- HELPER FUNCTIONS -----
+        function updateUI() {
+            angleVal.innerText = angleSlider.value;
+            powerVal.innerText = powerSlider.value;
+            massVal.innerText = massSlider.value;
+            document.getElementById('gravitySlider').value = gravity;
+            if(currentMode === "challenge") {
+                scoreValSpan.innerText = challengeScore;
+                scoreboardDiv.innerHTML = `🎯 Challenge Score: ${challengeScore}`;
+            } else if(currentMode === "vs") {
+                scoreValSpan.innerText = `${vsScore.left} : ${vsScore.right}`;
+                scoreboardDiv.innerHTML = `⚔️ VS: Left ${vsScore.left}  -  Right ${vsScore.right}`;
+            } else {
+                scoreValSpan.innerText = "-";
+                scoreboardDiv.innerHTML = `🧪 Sandbox | Free play`;
+            }
+            velVal.innerText = Math.hypot(projectile.vx, projectile.vy).toFixed(1);
+        }
+        
+        // Apply physics formulas
+        function applyPhysics(obj, dt) {
+            if(!obj.active) return;
+            // Newton's second law: a = F/m. Here only gravity force: Fg = m * g
+            let ax = 0;
+            let ay = gravity;
+            // Air resistance (simple drag ~ v^2, but linear for stability)
+            let drag = 0.02;
+            ax -= obj.vx * drag;
+            ay -= obj.vy * drag;
+            
+            obj.vx += ax * dt;
+            obj.vy += ay * dt;
+            obj.x += obj.vx * dt;
+            obj.y += obj.vy * dt;
+            
+            // Ground collision
+            if(obj.y + obj.radius >= groundY) {
+                obj.y = groundY - obj.radius;
+                if(obj.vy > 0.5) {
+                    obj.vy = -obj.vy * restitution;
+                } else {
+                    obj.vy = 0;
+                    obj.vx *= 0.98;
+                }
+                if(Math.abs(obj.vy) < 0.5 && obj.vy !== 0) obj.vy = 0;
+            }
+            // Left/right boundaries (walls)
+            if(obj.x - obj.radius <= 0) { obj.x = obj.radius; obj.vx = -obj.vx * 0.8; }
+            if(obj.x + obj.radius >= W) { obj.x = W - obj.radius; obj.vx = -obj.vx * 0.8; }
+            // Ceiling
+            if(obj.y - obj.radius <= 0) { obj.y = obj.radius; obj.vy = -obj.vy * 0.7; }
+        }
+        
+        function launchProjectile() {
+            if(!gameRunning || isReplaying) return;
+            let angleRad = angleSlider.value * Math.PI / 180;
+            let power = parseFloat(powerSlider.value);   // impulse force (N·s)
+            let mass = parseFloat(massSlider.value);
+            // Impulse-momentum: F * dt = m * Δv  => Δv = (power) / m   (since dt is 1 frame approx but we set initial velocity)
+            let speed = power / mass;
+            let vx0 = Math.cos(angleRad) * speed;
+            let vy0 = -Math.sin(angleRad) * speed;
+            
+            if(currentMode === "challenge" || currentMode === "sandbox") {
+                projectile.vx = vx0;
+                projectile.vy = vy0;
+                projectile.mass = mass;
+                projectile.active = true;
+                // Show physics learning
+                learningCard.innerHTML = `<strong>🚀 Projectile Motion</strong><br>Initial velocity: ${speed.toFixed(1)} m/s at ${angleSlider.value}°<br>Horizontal: vₓ = v·cosθ = ${vx0.toFixed(1)}<br>Vertical: vᵧ = v·sinθ = ${vy0.toFixed(1)}<br>Gravity (${gravity} m/s²) pulls down → parabolic arc.`;
+            } 
+            else if(currentMode === "vs") {
+                // In VS mode, apply impulse to the central ball (secondPlayer)
+                secondPlayer.vx += vx0 * 0.8;
+                secondPlayer.vy += vy0 * 0.8;
+                secondPlayer.mass = mass;
+                secondPlayer.active = true;
+                learningCard.innerHTML = `<strong>⚡ Newton's 2nd Law & Impulse</strong><br>Force = mass × acceleration.<br>Impulse ${power} N·s changes momentum: Δp = F·Δt.<br>New velocity = ${Math.hypot(secondPlayer.vx, secondPlayer.vy).toFixed(1)} m/s.`;
+            }
+            updateUI();
+        }
+        
+        function resetGame() {
+            if(currentMode === "challenge") {
+                projectile.x = 100; projectile.y = groundY - projectile.radius;
+                projectile.vx = 0; projectile.vy = 0;
+                projectile.active = true;
+                target.hit = false;
+                // random target position x between 500 and 900
+                target.x = Math.min(W-40, Math.max(400, 500 + Math.random() * 350));
+                target.y = groundY - target.radius;
+                updateUI();
+                learningCard.innerHTML = `<strong>🎯 Challenge Reset</strong><br>Launch projectile to hit the target. Use angle & power. Real projectile physics!`;
+            } 
+            else if(currentMode === "vs") {
+                secondPlayer.x = W/2; secondPlayer.y = groundY - secondPlayer.radius;
+                secondPlayer.vx = 0; secondPlayer.vy = 0;
+                secondPlayer.active = true;
+                projectile.active = false;
+                vsRoundActive = true;
+                learningCard.innerHTML = `<strong>⚔️ VS Mode</strong><br>Left player (WASD) clicks "Launch" to apply impulse to ball.<br>Goal: push ball into opponent's goal. Momentum conservation!`;
+            }
+            else if(currentMode === "sandbox") {
+                projectile.x = 100; projectile.y = groundY - projectile.radius;
+                projectile.vx = 0; projectile.vy = 0;
+                projectile.active = true;
+                learningCard.innerHTML = `<strong>🧪 Sandbox</strong><br>Adjust mass, gravity, force. Observe real Newtonian physics.`;
+            }
+            updateUI();
+        }
+        
+        function checkChallengeHit() {
+            if(!projectile.active) return false;
+            let dist = Math.hypot(projectile.x - target.x, projectile.y - target.y);
+            if(dist < projectile.radius + target.radius && !target.hit) {
+                target.hit = true;
+                challengeScore += 10;
+                updateUI();
+                learningCard.innerHTML = `<strong>🎯 HIT! Score +10</strong><br>You used projectile motion: range depends on v²·sin(2θ)/g.<br>Formula: R = (v₀²·sin(2θ))/g = ${((Math.hypot(projectile.vx, projectile.vy)**2 * Math.sin(2*angleSlider.value*Math.PI/180))/gravity).toFixed(1)} m theoretical.`;
+                // reset after hit for new target
+                setTimeout(() => { resetGame(); }, 800);
+                return true;
+            }
+            return false;
+        }
+        
+        function checkVSGoals() {
+            let ball = secondPlayer;
+            if(!ball.active) return;
+            if(ball.x - ball.radius <= leftGoal.x + leftGoal.w && ball.y + ball.radius > leftGoal.y && ball.y - ball.radius < leftGoal.y + leftGoal.h) {
+                vsScore.right++;
+                updateUI();
+                learningCard.innerHTML = `<strong>⚽ GOAL! Right scores!</strong><br>Momentum p = m·v = ${(ball.mass * Math.hypot(ball.vx, ball.vy)).toFixed(1)} kg·m/s.<br>Conservation of momentum in collisions.`;
+                resetGame();
+            }
+            else if(ball.x + ball.radius >= rightGoal.x && ball.y + ball.radius > rightGoal.y && ball.y - ball.radius < rightGoal.y + rightGoal.h) {
+                vsScore.left++;
+                updateUI();
+                learningCard.innerHTML = `<strong>⚽ GOAL! Left scores!</strong><br>Impulse changes momentum. You applied force over time.`;
+                resetGame();
+            }
+        }
+        
+        // Trajectory prediction (for challenge mode)
+        function computeTrajectory() {
+            if(currentMode !== "challenge" || isReplaying) return [];
+            let points = [];
+            let angleRad = angleSlider.value * Math.PI / 180;
+            let speed = powerSlider.value / parseFloat(massSlider.value);
+            let vx0 = Math.cos(angleRad) * speed;
+            let vy0 = -Math.sin(angleRad) * speed;
+            let x = 100, y = groundY - projectile.radius;
+            let vx = vx0, vy = vy0;
+            let dt = 0.1;
+            for(let step=0; step<120; step++) {
+                x += vx * dt;
+                y += vy * dt;
+                vy += gravity * dt;
+                if(y + projectile.radius >= groundY) break;
+                if(x > W || x < 0) break;
+                points.push({x, y});
+            }
+            return points;
+        }
+        
+        // Slow motion replay: store positions every frame
+        function startReplay() {
+            if(isReplaying) return;
+            replayFrames = [];
+            isReplaying = true;
+            replayIndex = 0;
+            // store current state
+            let state = { x: projectile.x, y: projectile.y, vx: projectile.vx, vy: projectile.vy, active: projectile.active };
+            replayFrames.push(state);
+            // Simulate forward with smaller timestep
+            let simX = projectile.x, simY = projectile.y, simVx = projectile.vx, simVy = projectile.vy;
+            for(let i=0;i<200;i++) {
+                let dt = 1/30;
+                simVx += 0 * dt;
+                simVy += gravity * dt;
+                simX += simVx * dt;
+                simY += simVy * dt;
+                if(simY + projectile.radius >= groundY) break;
+                replayFrames.push({ x: simX, y: simY, vx: simVx, vy: simVy, active: true });
+            }
+            // animate replay
+            function replayStep() {
+                if(replayIndex >= replayFrames.length) {
+                    isReplaying = false;
+                    cancelAnimationFrame(replayAnim);
+                    return;
+                }
+                let f = replayFrames[replayIndex];
+                projectile.x = f.x; projectile.y = f.y; projectile.vx = f.vx; projectile.vy = f.vy;
+                replayIndex++;
+                requestAnimationFrame(replayStep);
+            }
+            let replayAnim = requestAnimationFrame(replayStep);
+        }
+        
+        // ----- DRAWING -----
+        function draw() {
+            ctx.clearRect(0, 0, W, H);
+            // ground
+            ctx.fillStyle = '#2a3a2a';
+            ctx.fillRect(0, groundY, W, H-groundY+5);
+            ctx.fillStyle = '#5a7a5a';
+            ctx.fillRect(0, groundY-4, W, 6);
+            
+            // target (challenge)
+            if(currentMode === "challenge") {
+                ctx.fillStyle = '#ff6666';
+                ctx.shadowBlur = 8;
+                ctx.beginPath(); ctx.arc(target.x, target.y, target.radius, 0, Math.PI*2);
+                ctx.fill();
+                ctx.fillStyle = 'white';
+                ctx.font = 'bold 14px monospace';
+                ctx.fillText('🎯', target.x-8, target.y-8);
+            }
+            // VS goals
+            if(currentMode === "vs") {
+                ctx.fillStyle = '#3366cc88';
+                ctx.fillRect(leftGoal.x, leftGoal.y, leftGoal.w, leftGoal.h);
+                ctx.fillStyle = '#cc663388';
+                ctx.fillRect(rightGoal.x, rightGoal.y, rightGoal.w, rightGoal.h);
+                ctx.fillStyle = 'white';
+                ctx.fillText('LEFT GOAL', leftGoal.x-10, leftGoal.y+40);
+                ctx.fillText('RIGHT GOAL', rightGoal.x-20, rightGoal.y+40);
+                // ball
+                ctx.fillStyle = '#ffaa44';
+                ctx.beginPath(); ctx.arc(secondPlayer.x, secondPlayer.y, secondPlayer.radius, 0, Math.PI*2);
+                ctx.fill();
+            }
+            
+            // projectile
+            if(currentMode !== "vs" || (currentMode==="vs" && projectile.active)) {
+                ctx.fillStyle = '#88ccff';
+                ctx.beginPath(); ctx.arc(projectile.x, projectile.y, projectile.radius, 0, Math.PI*2);
+                ctx.fill();
+            } else if(currentMode === "vs") {
+                ctx.fillStyle = '#88ccff';
+                ctx.beginPath(); ctx.arc(secondPlayer.x, secondPlayer.y, secondPlayer.radius, 0, Math.PI*2);
+                ctx.fill();
+            }
+            
+            // trajectory prediction
+            if(currentMode === "challenge" && !isReplaying) {
+                let points = computeTrajectory();
+                ctx.beginPath();
+                ctx.setLineDash([6, 8]);
+                ctx.strokeStyle = '#ffffaa';
+                ctx.lineWidth = 2;
+                for(let i=0;i<points.length-1;i++) {
+                    ctx.beginPath();
+                    ctx.moveTo(points[i].x, points[i].y);
+                    ctx.lineTo(points[i+1].x, points[i+1].y);
+                    ctx.stroke();
+                }
+                ctx.setLineDash([]);
+            }
+            ctx.shadowBlur = 0;
+            // velocity vector (if active)
+            let obj = (currentMode==="vs") ? secondPlayer : projectile;
+            if(obj.active && (Math.hypot(obj.vx, obj.vy)>0.2)) {
+                ctx.beginPath();
+                ctx.moveTo(obj.x, obj.y);
+                ctx.lineTo(obj.x + obj.vx*8, obj.y + obj.vy*8);
+                ctx.strokeStyle = '#ffaa55';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+            }
+        }
+        
+        // ----- GAME LOOP & PHYSICS UPDATE -----
+        let lastTimestamp = 0;
+        function gameLoop(now) {
+            if(!gameRunning) return;
+            let dt = Math.min(0.033, (now - lastTimestamp) / 1000);
+            if(dt > 0.01 && !isReplaying) {
+                if(currentMode === "challenge") {
+                    if(projectile.active) applyPhysics(projectile, dt);
+                    if(projectile.y + projectile.radius >= groundY && Math.abs(projectile.vy) < 0.2 && projectile.vx < 0.5 && projectile.active) {
+                        projectile.active = false;
+                        checkChallengeHit();
+                    }
+                    if(projectile.active) checkChallengeHit();
+                } 
+                else if(currentMode === "vs") {
+                    if(secondPlayer.active) applyPhysics(secondPlayer, dt);
+                    checkVSGoals();
+                    if(Math.abs(secondPlayer.vy) < 0.1 && secondPlayer.y + secondPlayer.radius >= groundY) {
+                        secondPlayer.vx *= 0.99;
+                    }
+                }
+                else if(currentMode === "sandbox") {
+                    if(projectile.active) applyPhysics(projectile, dt);
+                }
+                updateUI();
+            }
+            draw();
+            lastTimestamp = now;
+            requestAnimationFrame(gameLoop);
+        }
+        
+        // Event listeners
+        angleSlider.oninput = () => { angleVal.innerText = angleSlider.value; };
+        powerSlider.oninput = () => { powerVal.innerText = powerSlider.value; };
+        massSlider.oninput = () => { massVal.innerText = massSlider.value; };
+        gravitySlider.oninput = () => { gravity = parseFloat(gravitySlider.value); document.getElementById('gravitySlider').value=gravity; learningCard.innerHTML = `<strong>🌍 Gravity changed</strong><br>Now ${gravity} m/s². Objects fall faster/slower.`; };
+        actionBtn.onclick = () => { if(!isReplaying) launchProjectile(); };
+        resetBtn.onclick = () => { resetGame(); };
+        slowMoBtn.onclick = () => { if(projectile.active) startReplay(); else learningCard.innerHTML = `⏳ Launch projectile first, then replay.`; };
+        
+        // Mode switching
+        document.getElementById('challengeMode').onclick = () => {
+            currentMode = "challenge";
+            vsScore = { left: 0, right: 0 };
+            challengeScore = 0;
+            resetGame();
+        };
+        document.getElementById('vsMode').onclick = () => {
+            currentMode = "vs";
+            vsScore = { left: 0, right: 0 };
+            secondPlayer.x = W/2; secondPlayer.y = groundY - secondPlayer.radius;
+            secondPlayer.vx = 0; secondPlayer.vy = 0;
+            projectile.active = false;
+            resetGame();
+        };
+        document.getElementById('sandboxMode').onclick = () => {
+            currentMode = "sandbox";
+            resetGame();
+        };
+        
+        // initialize
+        resetGame();
+        gravity = 9.8;
+        lastTimestamp = performance.now();
+        requestAnimationFrame(gameLoop);
+    })();
+</script>
 </body>
 </html>
