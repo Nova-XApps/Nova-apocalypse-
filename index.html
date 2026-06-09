@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>INFINITE ASCENSION | 50 Weapons + 30 Auras</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="game-container">
+        <canvas id="gameCanvas" width="1300" height="800"></canvas>
+        <div class="hud">
+            <div class="stats">
+                <div>❤️ <span id="hp">100</span>/<span id="maxHp">100</span></div>
+                <div>⚡ DMG x<span id="dmgMult">1.00</span></div>
+                <div>⭐ Lv.<span id="level">1</span></div>
+                <div>📊 XP <span id="xp">0</span>/<span id="xpNext">100</span></div>
+                <div>💀 Kills <span id="kills">0</span></div>
+                <div>🌊 Wave <span id="wave">1</span></div>
+            </div>
+            <div class="arsenal">
+                <div>🔫 Weapons: <span id="weaponCount">1</span>/50</div>
+                <div>✨ Auras: <span id="auraCount">0</span>/30</div>
+            </div>
+        </div>
+        <div id="upgradePanel" class="upgrade-panel hidden">
+            <h2>🌟 ASCENSION 🌟</h2>
+            <p>Choose your power</p>
+            <div class="upgrade-grid" id="upgradeGrid"></div>
+        </div>
+        <div id="gameOverPanel" class="game-over hidden">
+            <h2>💀 DEFEATED 💀</h2>
+            <p>Wave <span id="finalWave">0</span> | Kills <span id="finalKills">0</span></p>
+            <button id="restartButton">🔄 RESTART</button>
+        </div>
+        <div class="tip">WASD move | Mouse aim | Auto-attack | XP orbs scale by enemy tier</div>
+    </div>
+    <script src="game.js"></script>
+</body>
+</html>
